@@ -1,3 +1,6 @@
+--liquibase formatted sql
+
+--changeset dk98126:add-procedures endDelimiter:/
 CREATE OR REPLACE PROCEDURE p_add_paper(p_id number, tit varchar2, absr varchar2, t clob, auth varchar2)
     IS
 BEGIN
@@ -7,6 +10,7 @@ EXCEPTION
     WHEN OTHERS
         THEN NULL;
 END p_add_paper;
+/
 
 BEGIN
     p_add_paper(1, 'Information flow control in database program units based on formal verification',
@@ -15,8 +19,7 @@ BEGIN
                 'A.A.Timakov');
     commit;
 END;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE PROCEDURE p_submit_paper(s_id number, p_id number, c_id number, sub_date date, stat number)
     IS
@@ -27,13 +30,13 @@ EXCEPTION
     WHEN OTHERS
         THEN NULL;
 END p_submit_paper;
+/
 
 BEGIN
     p_submit_paper(1, 1, 1, '12.09.2021', 0);
     commit;
 END;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE PROCEDURE p_chahge_status(s_id number, stat number)
     IS
@@ -42,13 +45,13 @@ BEGIN
     SET status = stat
     WHERE submission_id = s_id;
 END p_chahge_status;
+/
 
 BEGIN
     p_chahge_status(1, 0);
     commit;
 END;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE FUNCTION f_is_accepted(s_id number) return boolean
     IS
@@ -65,8 +68,7 @@ BEGIN
         return FALSE;
     END IF;
 END f_is_accepted;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 create or replace PROCEDURE p_allocate(id number, s_id number, sec_id number, alloc_date date)
     IS
@@ -93,8 +95,7 @@ EXCEPTION
     WHEN OTHERS THEN
         NULL;
 END p_allocate;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE TYPE paper_typ AS OBJECT
 (
@@ -104,8 +105,13 @@ CREATE OR REPLACE TYPE paper_typ AS OBJECT
     "TEXT"   CLOB,
     authors  VARCHAR2(1000)
 );
+/
 
 CREATE OR REPLACE TYPE paper_arr_typ AS VARRAY(1000) OF paper_typ;
+/
+
+CREATE OR REPLACE TYPE paper_tab_typ IS TABLE OF paper_typ;
+/
 
 CREATE OR REPLACE FUNCTION f_getsection_program(s_id number) RETURN paper_arr_typ
 AS
@@ -122,22 +128,19 @@ BEGIN
                        WHERE a.section_id = s_id);
     RETURN v_program;
 END f_getsection_program;
+/
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION f_getpaper(p_id number) return paper_typ
+CREATE OR REPLACE FUNCTION f_getpaper(p_id number) return paper_tab_typ
 AS
-    v_paper paper_typ;
+    v_paper paper_tab_typ;
 BEGIN
-    SELECT paper_typ(paper_id, title, abstract, text, authors)
+    SELECT paper_tab_typ(paper_typ(paper_id, title, abstract, text, authors))
     INTO v_paper
     FROM papers
     WHERE paper_id = p_id;
     RETURN v_paper;
 END f_getpaper;
-
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE FUNCTION f_getsubmissions(c_id number) return paper_arr_typ
 AS
@@ -151,8 +154,7 @@ BEGIN
                        WHERE conference_id = c_id);
     RETURN v_submissions;
 END f_getsubmissions;
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/
 
 CREATE OR REPLACE FUNCTION f_getaccepted(c_id number) return paper_arr_typ
 AS
@@ -167,3 +169,4 @@ BEGIN
                          AND status = 1);
     RETURN v_accepted;
 END f_getaccepted;
+/
